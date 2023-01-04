@@ -1,14 +1,15 @@
 package lame
 
 import (
-	"testing"
 	"os"
-	"./compare"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ReadWavHeader(t *testing.T) {
 	tests := []struct {
-		fn string
+		fn  string
 		hdr WavHeader
 	}{
 		{
@@ -45,12 +46,7 @@ func Test_ReadWavHeader(t *testing.T) {
 				t.Errorf("Case#%d, %s", idx, err.Error())
 				return
 			}
-			diffs, err := compare.Compare(&test.hdr, &hdr)
-			if err != nil {
-				t.Errorf("%s", err.Error())
-			} else if len(diffs) > 0 {
-				t.Errorf("%#v", diffs)
-			}
+			require.Equal(t, &test.hdr, hdr, "must be equal")
 		})
 	}
 }
@@ -60,4 +56,3 @@ func Test_LameStruct(t *testing.T) {
 	t.Logf("%#v", l.lgs)
 	t.Logf("%#v", err)
 }
-
