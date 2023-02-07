@@ -7,9 +7,9 @@ package lame
 */
 import "C"
 import (
-	"runtime"
 	"errors"
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -36,28 +36,28 @@ type (
 
 // let us define modes here
 const (
-	MODE_STEREO        Mode = iota
+	MODE_STEREO Mode = iota
 	MODE_JOINT_STEREO
-	MODE_DUAL_CHANNEL   /* LAME doesn't supports this! */
+	MODE_DUAL_CHANNEL /* LAME doesn't supports this! */
 	MODE_MONO
-	MODE_NOT_SET        /* Don't use this! It's used for sanity checks. */
+	MODE_NOT_SET /* Don't use this! It's used for sanity checks. */
 	MODE_MAX_INDICATOR
 )
 
 // let us define vbr mode here
 const (
-	VBR_OFF           VBRMode = iota
+	VBR_OFF VBRMode = iota
 	VBR_MT
 	VBR_RH
 	VBR_ABR
 	VBR_MTRH
 	VBR_MAX_INDICATOR
-	VBR_DEFAULT       = VBR_MTRH
+	VBR_DEFAULT = VBR_MTRH
 )
 
 // let us define asm optimizations
 const (
-	AO_INVALID   AsmOptimizations = iota
+	AO_INVALID AsmOptimizations = iota
 	AO_MMX
 	AO_AMD_3DNOW
 	AO_SSE
@@ -148,13 +148,13 @@ func (l *Lame) EncodeInt16(dataLeft, dataRight []int16, mp3Buf []byte) (int, err
 
 // encode pcm to mp3, given buffer. same with encodeInt64, except data for left and right channels being interleaved
 // according to LAME, there is a loose bound for the buf, len=1.25*numSamped + 7200
-func (l *Lame) EncodeInt16Interleaved(data []int16, mp3Buf []byte) (int, error) {
+func (l *Lame) EncodeInt16Interleaved(data []int16, outSamples int, mp3Buf []byte) (int, error) {
 	if len(mp3Buf) == 0 || len(data) == 0 {
 		return 0, ErrEmptyArguments
 	}
 	cMp3Buf := (*C.uchar)(unsafe.Pointer(&mp3Buf[0]))
 	cData := (*C.short)(unsafe.Pointer(&data[0]))
-	ret := int(C.lame_encode_buffer_interleaved(l.lgs, cData, C.int(len(data)), cMp3Buf, C.int(len(mp3Buf))))
+	ret := int(C.lame_encode_buffer_interleaved(l.lgs, cData, C.int(outSamples), cMp3Buf, C.int(len(mp3Buf))))
 	return l.encodeError(ret)
 }
 
@@ -246,12 +246,12 @@ func (l *Lame) GetNumChannels() int {
 }
 
 /*
-  scale the input by this amount before encoding.  default=1
-  (not used by decoding routines)
+scale the input by this amount before encoding.  default=1
+(not used by decoding routines)
 */
 func (l *Lame) SetScale(scale float32) error {
 	l.checkLgs()
-	return l.setterError("lame_set_scale", int( C.lame_set_scale(l.lgs, C.float(scale))))
+	return l.setterError("lame_set_scale", int(C.lame_set_scale(l.lgs, C.float(scale))))
 }
 func (l *Lame) GetScale() float32 {
 	l.checkLgs()
@@ -259,9 +259,9 @@ func (l *Lame) GetScale() float32 {
 }
 
 /*
-  scale the channel 0 (left) input by this amount before encoding.  default=1
-  (not used by decoding routines)
-  ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L206
+scale the channel 0 (left) input by this amount before encoding.  default=1
+(not used by decoding routines)
+ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L206
 */
 func (l *Lame) SetScaleLeft(scale float32) error {
 	l.checkLgs()
@@ -269,8 +269,8 @@ func (l *Lame) SetScaleLeft(scale float32) error {
 }
 
 /*
-  scale the channel 1 (right) input by this amount before encoding.  default=1
-  (not used by decoding routines)
+scale the channel 1 (right) input by this amount before encoding.  default=1
+(not used by decoding routines)
 */
 func (l *Lame) SetScaleRight(scaleRight float32) error {
 	l.checkLgs()
@@ -283,12 +283,12 @@ func (l *Lame) GetScaleRight() float32 {
 }
 
 /*
-  output sample rate in Hz.  default = 0, which means LAME picks best value
-  based on the amount of compression.  MPEG only allows:
-  MPEG1    32, 44.1,   48khz
-  MPEG2    16, 22.05,  24
-  MPEG2.5   8, 11.025, 12
-  (not used by decoding routines)
+output sample rate in Hz.  default = 0, which means LAME picks best value
+based on the amount of compression.  MPEG only allows:
+MPEG1    32, 44.1,   48khz
+MPEG2    16, 22.05,  24
+MPEG2.5   8, 11.025, 12
+(not used by decoding routines)
 */
 func (l *Lame) SetOutSampleRate(outSampleRate int) error {
 	l.checkLgs()
@@ -303,9 +303,10 @@ func (l *Lame) GetOutSampleRate() int {
 	return int(C.lame_get_out_samplerate(l.lgs))
 }
 
-/*  below are general control parameters
-	default: 0
-	set to 1 if you need LAME to ollect data for an MP3 frame analyzer
+/*
+	  below are general control parameters
+		default: 0
+		set to 1 if you need LAME to ollect data for an MP3 frame analyzer
 */
 func (l *Lame) SetAnalysis(analysis int) error {
 	l.checkLgs()
@@ -318,9 +319,9 @@ func (l *Lame) GetAnalysis() int {
 }
 
 /*
-  1 = write a Xing VBR header frame.
-  default = 1
-  this variable must have been added by a Hungarian notation Windows programmer :-)
+1 = write a Xing VBR header frame.
+default = 1
+this variable must have been added by a Hungarian notation Windows programmer :-)
 */
 func (l *Lame) SetBWriteVbrTag(bWriteVbrTag int) error {
 	l.checkLgs()
@@ -344,12 +345,14 @@ func (l *Lame) GetDecodeOnly() int {
 }
 
 /*
-  internal algorithm selection.  True quality is determined by the bitrate
-  but this variable will effect quality by selecting expensive or cheap algorithms.
-  quality=0..9.  0=best (very slow).  9=worst.
-  recommended:  2     near-best quality, not too slow
-                5     good quality, fast
-                7     ok quality, really fast
+internal algorithm selection.  True quality is determined by the bitrate
+but this variable will effect quality by selecting expensive or cheap algorithms.
+quality=0..9.  0=best (very slow).  9=worst.
+recommended:
+
+	2     near-best quality, not too slow
+	5     good quality, fast
+	7     ok quality, really fast
 */
 func (l *Lame) SetQuality(quality int) error {
 	l.checkLgs()
@@ -362,8 +365,8 @@ func (l *Lame) GetQuality() int {
 }
 
 /*
-  mode = 0,1,2,3 = stereo, jstereo, dual channel (not supported), mono
-  default: lame picks based on compression ration and input channels
+mode = 0,1,2,3 = stereo, jstereo, dual channel (not supported), mono
+default: lame picks based on compression ration and input channels
 */
 func (l *Lame) SetMode(mode Mode) error {
 	l.checkLgs()
@@ -375,8 +378,8 @@ func (l *Lame) GetMode() Mode {
 }
 
 /*
-  force_ms.  Force M/S for all frames.  For testing only.
-  default = 0 (disabled)
+force_ms.  Force M/S for all frames.  For testing only.
+default = 0 (disabled)
 */
 func (l *Lame) SetForceMs(forceMs int) error {
 	l.checkLgs()
@@ -691,8 +694,8 @@ func (l *Lame) GetVBRMaxBitrateKbps() int {
 }
 
 /*
-  1=strictly enforce VBR_min_bitrate.  Normally it will be violated for
-  analog silence
+1=strictly enforce VBR_min_bitrate.  Normally it will be violated for
+analog silence
 */
 func (l *Lame) SetVBRHardMin(VBRHardMin int) error {
 	l.checkLgs()
@@ -827,8 +830,8 @@ func (l *Lame) GetAthaaSensitivity() float32 {
 }
 
 /*
-  allow blocktypes to differ between channels?
-  default: 0 for jstereo, 1 for stereo
+allow blocktypes to differ between channels?
+default: 0 for jstereo, 1 for stereo
 */
 func (l *Lame) SetAllowDiffShort(allowDiffShort int) error {
 	l.checkLgs()
@@ -884,10 +887,13 @@ func (l *Lame) GetForceShortBlocks() int {
 	return int(C.lame_get_force_short_blocks(l.lgs))
 }
 
-/* Input PCM is emphased PCM (for instance from one of the rarely
-   emphased CDs), it is STRONGLY not recommended to use this, because
-   psycho does not take it into account, and last but not least many decoders
-   ignore these bits */
+/*
+Input PCM is emphased PCM (for instance from one of the rarely
+
+	emphased CDs), it is STRONGLY not recommended to use this, because
+	psycho does not take it into account, and last but not least many decoders
+	ignore these bits
+*/
 func (l *Lame) SetEmphasis(emphasis int) error {
 	l.checkLgs()
 	return l.setterError("lame_set_emphasis", int(C.lame_set_emphasis(l.lgs, C.int(emphasis))))
@@ -911,10 +917,10 @@ func (l *Lame) GetEncoderDelay() int {
 }
 
 /*
-  padding appended to the input to make sure decoder can fully decode
-  all input.  Note that this value can only be calculated during the
-  call to lame_encoder_flush().  Before lame_encoder_flush() has
-  been called, the value of encoder_padding = 0.
+padding appended to the input to make sure decoder can fully decode
+all input.  Note that this value can only be calculated during the
+call to lame_encoder_flush().  Before lame_encoder_flush() has
+been called, the value of encoder_padding = 0.
 */
 func (l *Lame) GetEncoderPadding() int {
 	l.checkLgs()
@@ -934,8 +940,8 @@ func (l *Lame) GetMfSamplesToEncode() int {
 }
 
 /*
-  size (bytes) of mp3 data buffered, but not yet encoded.
-  ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L594
+size (bytes) of mp3 data buffered, but not yet encoded.
+ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L594
 */
 func (l *Lame) GetSizeMp3buffer() int {
 	l.checkLgs()
@@ -949,8 +955,8 @@ func (l *Lame) GetFrameNum() int {
 }
 
 /*
-  lame's estimate of the total number of frames to be encoded
-   only valid if calling program set num_samples
+lame's estimate of the total number of frames to be encoded
+only valid if calling program set num_samples
 */
 func (l *Lame) GetTotalframes() int {
 	l.checkLgs()
@@ -975,8 +981,10 @@ func (l *Lame) GetPeakSample() float32 {
 	return float32(C.lame_get_PeakSample(l.lgs))
 }
 
-/* Gain change required for preventing clipping.
-   ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L623
+/*
+Gain change required for preventing clipping.
+
+	ref: https://github.com/gypified/libmp3lame/blob/master/include/lame.h#L623
 */
 func (l *Lame) GetNoclipGainChange() int {
 	l.checkLgs()
